@@ -1,0 +1,136 @@
+@import "tailwindcss";
+
+/* Font global */
+@import url("https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap");
+
+@import "@splidejs/splide/css";
+
+:root {
+  --font-sans: "Lato", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, "Noto Sans";
+}
+
+html, body, #root {
+   height: 100%; 
+}
+
+/* --- Custom Splide --- */
+/* --- Splide (shared) --- */
+.splide__slide img { width: 100%; height: 100%; object-fit: cover; }
+
+.splide__arrow {
+  background-color: rgba(47, 51, 52, 1) !important;
+  border: 1px solid rgba(231, 227, 252, 0.23) !important;
+  width: 44px !important;
+  height: 44px !important;
+  opacity: 1 !important;
+  transform: translateY(-50%); /* hanya vertikal — horizontal via left/right */
+}
+.splide__arrow:hover { 
+  background-color: rgba(24, 26, 28, 1) !important; 
+}
+.splide__arrow svg {
+   fill: white !important; 
+}
+
+
+
+
+/* --- Posisi arrow per section --- */
+/* History (landscape) */
+.history-carousel .splide__arrow--prev { 
+  left: -1.25rem !important; }
+
+.history-carousel .splide__arrow--next {
+   right: -2rem !important; 
+}
+
+/* Poster (top/trend/new) */
+.poster-carousel .splide__arrow--prev { 
+  left: -1rem !important;
+}
+.poster-carousel .splide__arrow--next { 
+  right: 1.2rem !important; 
+}
+
+/* Responsif: rapatkan sedikit di layar lebih kecil */
+@media (max-width: 1024px) {
+  .history-carousel .splide__arrow--prev {
+     left: -0.75rem !important; 
+  }
+  .history-carousel .splide__arrow--next {
+     right: -1.5rem !important; 
+  }
+  .poster-carousel .splide__arrow--prev {
+     left: -0.5rem !important; 
+  }
+  .poster-carousel .splide__arrow--next {
+     right: -1rem !important; 
+  }
+}
+
+/* card khusus poster */
+.reco-slide img {
+   width: 234px; height: 365px; border-radius: 8px; object-fit: cover; 
+}
+.reco-slide img {
+   border-radius: 8px; object-fit: cover; 
+}
+
+@media (max-width: 480px) {
+  .reco-slide img { width: 95.6px; height: 143.39px; }
+}
+
+/*----- Use State Manage -----*/
+/* Select gelap (background dropdown & option) */
+.select-dark {
+  background-color: #181A1C;
+  color: #fff;
+}
+.select-dark option {
+  background-color: #181A1C;
+  color: #fff;
+}
+/* Fokus biar border keliatan */
+.select-dark:focus {
+  outline: none;
+  border-color: rgba(255,255,255,.4);
+}
+
+
+/* Hero Series */
+/* Overlay utama: gradient Figma */
+.hero-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, #000000 0%, #101213 0%, #181A1C 100%);
+  opacity: 0.80; /* tweak 0.75–0.85 kalau perlu */
+  /* pointer-events: none; */
+}
+
+/* Feather bawah agar nyatu mulus ke body #181A1C */
+.hero-feather {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  height: 10rem;
+  background: linear-gradient(180deg, rgba(24,26,28,0) 0%, rgba(24,26,28,1) 100%);
+  pointer-events: none;
+}
+
+/* opsional: bantu keterbacaan judul */
+.text-shadow { text-shadow: 0 1px 8px rgba(0,0,0,0.35); }
+
+
+/* Display Mobile */
+@layer utilities {
+  @media (max-width: 360px) {
+    .hero-225 {
+      height: 225px !important;
+      max-height: 225px !important;
+    }
+    .hero-225-inner {
+      padding: 4.1rem 1.3rem !important; /* pt-10 */
+      gap: .75rem !important;         /* gap-3 */
+    }
+  }
+}
+
