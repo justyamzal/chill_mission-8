@@ -228,3 +228,5 @@ export const searchMulti = async (query, page = 1, signal) => {
   const { data } = await api.get("/search/multi", { params: { query, page }, signal });
   return data;
 };
+
+
