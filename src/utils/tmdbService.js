@@ -229,4 +229,69 @@ export const searchMulti = async (query, page = 1, signal) => {
   return data;
 };
 
+// === AUTH (v3) & WATHCLIST === //
+export async function tmdbCreateRequestToken(signal){
+  const { data } = await api.get("/authentication/token/new", { signal });
+  return data?.request_token;
+}
+export async function tmdbValidateWithLogin({ username, password, request_token }, signal){
+  const { data } = await api.post("/authentication/token/validate_with_login", {
+    username, password, request_token
+  }, { signal });
+  return data?.request_token; // validated
+}
+export async function tmdbCreateSession(request_token, signal){
+  const { data } = await api.post("/authentication/session/new", { request_token }, { signal });
+  return data?.session_id;
+}
+export async function tmdbGetAccount(session_id, signal){
+  const { data } = await api.get("/account", { params:{ session_id }, signal });
+  return data; // contains id, username, etc.
+}
 
+// Simpan & muat dari localStorage
+export function saveTmdbSession({ session_id, account_id }){
+  localStorage.setItem("tmdb:session_id", session_id);
+  localStorage.setItem("tmdb:account_id", String(account_id));
+}
+export function loadTmdbSession(){
+  const session_id = localStorage.getItem("tmdb:session_id");
+  const account_id = localStorage.getItem("tmdb:account_id");
+  return { session_id, account_id: account_id ? Number(account_id) : null };
+}
+
+// LOGIN v3 (pakai username & password TMDB)
+export async function tmdbLoginWithPassword({ username, password }, signal){
+  const rt1 = await tmdbCreateRequestToken(signal);
+  const rt2 = await tmdbValidateWithLogin({ username, password, request_token: rt1 }, signal);
+  const session_id = await tmdbCreateSession(rt2, signal);
+  const acc = await tmdbGetAccount(session_id, signal);
+  saveTmdbSession({ session_id, account_id: acc.id });
+  return { session_id, account_id: acc.id };
+}
+
+// WATCHLIST v3
+export async function addToWatchlist({ media_type, media_id, watchlist = true }, signal){
+  const { session_id, account_id } = loadTmdbSession();
+  if (!session_id || !account_id) throw new Error("TMDB belum login (session/account kosong).");
+  await api.post(`/account/${account_id}/watchlist`, {
+    media_type, media_id, watchlist
+  }, { params:{ session_id }, signal });
+  return true;
+}
+export async function fetchWatchlistMovies({ page = 1 } = {}, signal){
+  const { session_id, account_id } = loadTmdbSession();
+  if (!session_id || !account_id) throw new Error("TMDB belum login (session/account kosong).");
+  const { data } = await api.get(`/account/${account_id}/watchlist/movies`, {
+    params: { session_id, page, sort_by: "created_at.desc" }, signal
+  });
+  return data?.results ?? [];
+}
+export async function fetchWatchlistTV({ page = 1 } = {}, signal){
+  const { session_id, account_id } = loadTmdbSession();
+  if (!session_id || !account_id) throw new Error("TMDB belum login (session/account kosong).");
+  const { data } = await api.get(`/account/${account_id}/watchlist/tv`, {
+    params: { session_id, page, sort_by: "created_at.desc" }, signal
+  });
+  return data?.results ?? [];
+}

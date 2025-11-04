@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
+
 export default function HoverCard({
   children,
   poster,
@@ -13,6 +14,7 @@ export default function HoverCard({
   openDelay = 300,              // kurangi sensitivitas hover
   closeDelay = 140,             // tutup sedikit setelah mouse keluar
   withBackdropOnClick = true,   // backdrop khusus saat trigger="click"
+  onAdd, // ← callback optional
 }) {
   const triggerRef = useRef(null);
   const [open, setOpen] = useState(false);
@@ -178,9 +180,12 @@ export default function HoverCard({
              cursor-pointer transition hover:bg-white/20 active:scale-95 focus:outline-none focus:ring-2 focus:ring-white/40 pointer-events-auto">
               <i className="fa-solid fa-caret-down" width="22" height="22"></i>
             </button>
-            <button type="button" aria-label="add to list"
-             className="w-[45px] h-[45px] rounded-full bg-white/10 grid place-items-center ring-1 ring-white/20 ml-auto
-             cursor-pointer transition hover:bg-white/20 active:scale-95 focus:outline-none focus:ring-2 focus:ring-white/40 pointer-events-auto">
+            <button
+              type="button"
+              aria-label="add to list"
+              onClick={onAdd} // ⬅️ gunakan prop onAdd di sini
+              className="w-[45px] h-[45px] rounded-full bg-white/10 grid place-items-center ring-1 ring-white/20 ml-auto
+              cursor-pointer transition hover:bg-white/20 active:scale-95 focus:outline-none focus:ring-2 focus:ring-white/40 pointer-events-auto">
               <i className="fa-solid fa-plus" width="22" height="22"></i>
             </button>
           </div>

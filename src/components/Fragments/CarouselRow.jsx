@@ -1,5 +1,8 @@
 import { Splide, SplideSlide } from "@splidejs/react-splide";
 import HoverCard from "@/components/Elements/HoverCard";
+// import { addToWatchlist } from "@/utils/tmdbWatchlist";
+import { addToWatchlist } from "@/utils/tmdbService";
+
 
 const PRESET = {
   history: {
@@ -105,6 +108,19 @@ export default function CarouselRow({
     ...options,
   };
 
+    async function handleAddToWatchlist(item) {
+    try {
+      await addToWatchlist({
+        media_type: item.kategori === "film" ? "movie" : "tv",
+        media_id: item.id,
+        watchlist: true,
+      });
+      console.log(`✅ Ditambahkan ke watchlist: ${item.title}`);
+    } catch (err) {
+      console.error("❌ Gagal menambah ke watchlist:", err.message);
+    }
+  }
+
   return (
     <section
       className={`w-full px-5 md:px-20 py-5 md:py-10 ${
@@ -134,6 +150,7 @@ export default function CarouselRow({
               trigger={hoverMode}
               openDelay={hoverOpenDelay}
               closeDelay={hoverCloseDelay}
+              onAdd={() => handleAddToWatchlist(it)}
             >
               <div className="relative reco-slide rounded-lg overflow-hidden
                 transition-transform duration-200 ease-[cubic-bezier(.2,.8,.2,1)]

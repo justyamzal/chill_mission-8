@@ -16,4 +16,22 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  server: {
+    proxy: {
+      "/tmdb": {
+        target: "https://api.themoviedb.org",
+        changeOrigin: true,
+        secure: true,
+        configure: (proxy) => {
+        proxy.on("proxyReq", (proxyReq) => {
+          proxyReq.setHeader("Origin", "https://api.themoviedb.org");
+          proxyReq.setHeader("Referer", "https://api.themoviedb.org");
+          proxyReq.setHeader("Access-Control-Allow-Origin", "*");
+          proxyReq.setHeader("Accept", "application/json");
+        });
+      },
+        rewrite: (path) => path.replace(/^\/tmdb/, ""),
+      },
+    },
+  },
 })
