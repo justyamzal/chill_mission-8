@@ -323,19 +323,87 @@ export async function tmdbLoginWithPassword({ username, password }, signal) {
   return { session_id, account_id: acc.id };
 }
 
-// WATCHLIST v3 (pakai session global/env ATAU localStorage)
-export async function addToWatchlist({ media_type, media_id, watchlist = true }, signal) {
-  const { session_id, account_id } = getTmdbSessionAndAccount();
-  if (!session_id || !account_id)
-    throw new Error("TMDB belum siap: session/account kosong.");
+// Helper: konversi id aplikasi (misal: 'airing-261663') ke ID TMDB (angka)
+  function normalizeMediaId(rawMediaId) {
+    console.log("[TMDB normalizeMediaId] rawMediaId =", rawMediaId, typeof rawMediaId);
 
-  await api.post(
-    `/account/${account_id}/watchlist`,
-    { media_type, media_id, watchlist },
-    { params: { session_id }, signal }
-  );
-  return true;
-}
+    if (rawMediaId == null) return null;
+
+    // Kalau sudah number (misal 261663), langsung pakai
+    if (typeof rawMediaId === "number") return rawMediaId;
+
+    // Kalau string: "tt-209867", "airing-261663", "movie-12345", dsb
+    if (typeof rawMediaId === "string") {
+      const match = rawMediaId.match(/\d+/); // ambil angka pertama
+      if (match) {
+        return Number(match[0]); // contoh: "tt-209867" -> 209867
+      }
+      return null;
+    }
+
+    // Kalau object, coba ambil id / tmdbId di dalamnya
+    if (typeof rawMediaId === "object") {
+      if ("id" in rawMediaId) {
+        return normalizeMediaId(rawMediaId.id);
+      }
+      if ("tmdbId" in rawMediaId) {
+        return normalizeMediaId(rawMediaId.tmdbId);
+      }
+    }
+
+    return null;
+  }
+
+
+// === Watchlist ===
+  export async function addToWatchlist(media_type, rawMediaId, watchlist = true) {
+    const { session_id, account_id } = getTmdbSessionAndAccount();
+
+    const media_id = normalizeMediaId(rawMediaId);
+
+    if (!media_id) {
+      console.error("[TMDB addToWatchlist] media_id tidak valid:", rawMediaId);
+      throw new Error("media_id TMDB tidak valid");
+    }
+
+    const payload = {
+      media_type,
+      media_id,
+      watchlist,
+    };
+
+    console.log("[TMDB addToWatchlist] Using", {
+      session_id,
+      account_id,
+      media_type,
+      media_id,
+    });
+
+    try {
+      const response = await api.post(
+        `/account/${account_id}/watchlist`,
+        payload,
+        {
+          params: { session_id },
+        }
+      );
+
+      console.log("[TMDB addToWatchlist] Response data:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("[TMDB addToWatchlist] ERROR", {
+        status: error.response?.status,
+        data: error.response?.data,
+        message: error.message,
+      });
+      // lempar detail TMDB biar bisa ditampilkan di UI
+      throw error.response?.data || error;
+    }
+  }
+
+
+
+
 
 export async function fetchWatchlistMovies({ page = 1 } = {}, signal) {
   const { session_id, account_id } = getTmdbSessionAndAccount();

@@ -108,18 +108,36 @@ export default function CarouselRow({
     ...options,
   };
 
-    async function handleAddToWatchlist(item) {
+  async function handleAddToWatchlist(item) {
     try {
-      await addToWatchlist({
-        media_type: item.kategori === "film" ? "movie" : "tv",
-        media_id: item.id,
-        watchlist: true,
-      });
-      console.log(`✅ Ditambahkan ke watchlist: ${item.title}`);
+      // 1. Tentukan media_type
+      const mediaType =
+        item.media_type || (item.kategori === "film" ? "movie" : "tv");
+
+      // 2. Ambil ID TMDB (HARUS number, bukan 'tt-xxxx')
+      const mediaId = item.id;
+
+      if (!mediaId) {
+        console.warn("[handleAddToWatchlist] item.id kosong", item);
+        return;
+      }
+
+      console.log("Sending to TMDB watchlist:", { mediaType, mediaId });
+
+      // 3. Panggil service dengan 3 argumen terpisah
+      await addToWatchlist(mediaType, mediaId, true);
+
+      console.log(
+        `✅ Ditambahkan ke watchlist: ${item.title || item.name || mediaId}`
+      );
     } catch (err) {
-      console.error("❌ Gagal menambah ke watchlist:", err.message);
+      console.error(
+        "❌ Gagal menambah ke watchlist:",
+        err.response?.data || err.message
+      );
     }
-  }
+  };
+
 
   return (
     <section

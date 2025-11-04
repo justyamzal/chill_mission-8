@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import Navbar from "../components/Fragments/Navbar";
 import Footer from "../components/Fragments/Footer";
 
+
 import {
   fetchWatchlistMovies,
   fetchWatchlistTV,
@@ -50,51 +51,35 @@ export default function MyList() {
     return () => abort.abort();
   }, []);
 
-  // Hapus film dari watchlist TMDB (pakai watchlist: false)
-  async function handleRemoveMovie(movie) {
-    if (!window.confirm(`Hapus "${movie.title}" dari watchlist TMDB?`)) return;
+// Hapus MOVIE dari watchlist
+const handleRemoveMovie = async (movie) => {
+  try {
+    setDeletingId(movie.id);
 
-    try {
-      setDeletingId(movie.id);
-      setError(null);
+    await addToWatchlist("movie", movie.id, false); // ✅ sesuai signature baru
 
-      await addToWatchlist({
-        media_type: "movie",
-        media_id: movie.id,
-        watchlist: false,
-      });
-
-      setMovies((prev) => prev.filter((m) => m.id !== movie.id));
-    } catch (err) {
-      console.error("❌ Gagal menghapus film dari watchlist:", err);
-      setError("Gagal menghapus film dari watchlist TMDB.");
-    } finally {
-      setDeletingId(null);
-    }
+    setMovies((prev) => prev.filter((m) => m.id !== movie.id));
+  } catch (err) {
+    console.error("❌ Gagal menghapus movie dari watchlist:", err);
+  } finally {
+    setDeletingId(null);
   }
+};
 
-  // Hapus series dari watchlist TMDB
-  async function handleRemoveSeries(tv) {
-    if (!window.confirm(`Hapus "${tv.name}" dari watchlist TMDB?`)) return;
+// Hapus SERIES dari watchlist
+const handleRemoveSeries = async (tv) => {
+  try {
+    setDeletingId(tv.id);
 
-    try {
-      setDeletingId(tv.id);
-      setError(null);
+    await addToWatchlist("tv", tv.id, false); // ✅ pakai "tv" + id TMDB
 
-      await addToWatchlist({
-        media_type: "tv",
-        media_id: tv.id,
-        watchlist: false,
-      });
-
-      setSeries((prev) => prev.filter((s) => s.id !== tv.id));
-    } catch (err) {
-      console.error("❌ Gagal menghapus series dari watchlist:", err);
-      setError("Gagal menghapus series dari watchlist TMDB.");
-    } finally {
-      setDeletingId(null);
-    }
+    setSeries((prev) => prev.filter((s) => s.id !== tv.id));
+  } catch (err) {
+    console.error("❌ Gagal menghapus series dari watchlist:", err);
+  } finally {
+    setDeletingId(null);
   }
+};
 
   return (
     <div className="min-h-screen w-full bg-[#181A1C] text-white">
@@ -104,12 +89,10 @@ export default function MyList() {
         <div className="flex items-start justify-between gap-4">
           <div>
             <h1 className="text-3xl md:text-4xl font-bold">
-              Daftar Saya (Public Prototype)
+              Daftar Saya
             </h1>
             <p className="text-white/70 mt-2">
-              Watchlist ini tersimpan di satu akun TMDB (akun demo). Semua
-              pengunjung aplikasi ini berbagi daftar yang sama — cocok untuk
-              belajar & prototype.
+              Watchlist ini tersimpan di satu akun TMDB
             </p>
           </div>
         </div>
