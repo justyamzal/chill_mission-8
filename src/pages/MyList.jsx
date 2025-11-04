@@ -8,6 +8,7 @@ import {
   fetchWatchlistTV,
   tmdbLoginWithPassword,
   loadTmdbSession,
+  addToWatchlist, // ⬅️ pakai juga untuk delete (watchlist: false)
 } from "@/utils/tmdbService";
 
 export default function MyList() {
@@ -19,6 +20,8 @@ export default function MyList() {
 
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+
+  const [deletingId, setDeletingId] = useState(null); // id yang sedang dihapus (optional)
 
   // 🔹 Saat pertama kali mount, cek apakah sudah ada session TMDB tersimpan
   useEffect(() => {
@@ -89,6 +92,53 @@ export default function MyList() {
     setSessionId(null);
     setMovies([]);
     setSeries([]);
+  }
+
+  // 🔹 Hapus film dari watchlist TMDB
+  async function handleRemoveMovie(movie) {
+    if (!window.confirm(`Hapus "${movie.title}" dari watchlist TMDB?`)) return;
+
+    try {
+      setDeletingId(movie.id);
+      setError(null);
+
+      await addToWatchlist({
+        media_type: "movie",
+        media_id: movie.id,
+        watchlist: false, // ⬅️ inilah kuncinya: false = remove
+      });
+
+      // update state lokal
+      setMovies((prev) => prev.filter((m) => m.id !== movie.id));
+    } catch (err) {
+      console.error("❌ Gagal menghapus film dari watchlist:", err);
+      setError("Gagal menghapus film dari watchlist TMDB.");
+    } finally {
+      setDeletingId(null);
+    }
+  }
+
+  // 🔹 Hapus series dari watchlist TMDB
+  async function handleRemoveSeries(tv) {
+    if (!window.confirm(`Hapus "${tv.name}" dari watchlist TMDB?`)) return;
+
+    try {
+      setDeletingId(tv.id);
+      setError(null);
+
+      await addToWatchlist({
+        media_type: "tv",
+        media_id: tv.id,
+        watchlist: false,
+      });
+
+      setSeries((prev) => prev.filter((s) => s.id !== tv.id));
+    } catch (err) {
+      console.error("❌ Gagal menghapus series dari watchlist:", err);
+      setError("Gagal menghapus series dari watchlist TMDB.");
+    } finally {
+      setDeletingId(null);
+    }
   }
 
   return (
@@ -200,7 +250,7 @@ export default function MyList() {
                   {movies.map((movie) => (
                     <div
                       key={movie.id}
-                      className="rounded-lg overflow-hidden bg-[#202124] hover:scale-[1.02] transition"
+                      className="relative rounded-lg overflow-hidden bg-[#202124] hover:scale-[1.02] transition group"
                     >
                       <img
                         src={
@@ -214,6 +264,18 @@ export default function MyList() {
                       <div className="p-2 text-sm font-semibold line-clamp-2">
                         {movie.title}
                       </div>
+
+                      {/* Button delete muncul saat hover */}
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveMovie(movie)}
+                        disabled={deletingId === movie.id}
+                        className="absolute top-2 right-2 opacity-0 group-hover:opacity-100
+                                   transition bg-red-600/90 hover:bg-red-700 text-xs px-2 py-1 rounded
+                                   flex items-center gap-1 shadow-lg cursor-pointer"
+                      >
+                        <span>{deletingId === movie.id ? "..." : "Delete"}</span>
+                      </button>
                     </div>
                   ))}
                 </div>
@@ -232,7 +294,7 @@ export default function MyList() {
                   {series.map((tv) => (
                     <div
                       key={tv.id}
-                      className="rounded-lg overflow-hidden bg-[#202124] hover:scale-[1.02] transition"
+                      className="relative rounded-lg overflow-hidden bg-[#202124] hover:scale-[1.02] transition group"
                     >
                       <img
                         src={
@@ -246,6 +308,18 @@ export default function MyList() {
                       <div className="p-2 text-sm font-semibold line-clamp-2">
                         {tv.name}
                       </div>
+
+                      {/* Button delete series */}
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveSeries(tv)}
+                        disabled={deletingId === tv.id}
+                        className="absolute top-2 right-2 opacity-0 group-hover:opacity-100
+                                   transition bg-red-600/90 hover:bg-red-700 text-xs px-2 py-1 rounded
+                                   flex items-center gap-1 shadow-lg cursor-pointer"
+                      >
+                        <span>{deletingId === tv.id ? "..." : "Delete"}</span>
+                      </button>
                     </div>
                   ))}
                 </div>

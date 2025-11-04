@@ -5,7 +5,6 @@ import Home from './pages/Home.jsx';
 import Series from './pages/Series.jsx';
 import Film from './pages/Film.jsx';
 import MyList from './pages/MyList.jsx';
-import AuthCallback from './pages/AuthCallback.jsx';
 import { ShowsProvider } from "./state/shows-context.jsx";
 import Manage from "./pages/Manage.jsx";
 
@@ -22,7 +21,7 @@ export default function App() {
         <Route path="/manage" element={<Manage />} />
         <Route path="/register" element={<Register />} />
         <Route path="*" element={<div className="p-8 text-white">404</div>} />
-        <Route path="/auth/callback" element={<AuthCallback />} />
+        
 
       </Routes>
     </ShowsProvider>
