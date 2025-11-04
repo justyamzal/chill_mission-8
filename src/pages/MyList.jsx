@@ -6,36 +6,18 @@ import Footer from "../components/Fragments/Footer";
 import {
   fetchWatchlistMovies,
   fetchWatchlistTV,
-  tmdbLoginWithPassword,
-  loadTmdbSession,
-  addToWatchlist, // ⬅️ pakai juga untuk delete (watchlist: false)
+  addToWatchlist,
 } from "@/utils/tmdbService";
 
 export default function MyList() {
-  const [sessionId, setSessionId] = useState(null);
   const [movies, setMovies] = useState([]);
   const [series, setSeries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [deletingId, setDeletingId] = useState(null);
 
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-
-  const [deletingId, setDeletingId] = useState(null); // id yang sedang dihapus (optional)
-
-  // 🔹 Saat pertama kali mount, cek apakah sudah ada session TMDB tersimpan
+  // Saat mount → langsung ambil watchlist TMDB pakai session global
   useEffect(() => {
-    const { session_id } = loadTmdbSession(); // dari tmdbService.js
-    if (session_id) {
-      setSessionId(session_id);
-    }
-    setLoading(false);
-  }, []);
-
-  // 🔹 Kalau sudah ada sessionId → ambil watchlist dari TMDB
-  useEffect(() => {
-    if (!sessionId) return;
-
     const abort = new AbortController();
 
     (async () => {
@@ -66,35 +48,9 @@ export default function MyList() {
     })();
 
     return () => abort.abort();
-  }, [sessionId]);
+  }, []);
 
-  // 🔹 Login ke TMDB menggunakan username & password TMDB (v3 API session)
-  async function handleLogin(e) {
-    e.preventDefault();
-    try {
-      setLoading(true);
-      setError(null);
-
-      const { session_id } = await tmdbLoginWithPassword({ username, password });
-      setSessionId(session_id);
-    } catch (err) {
-      console.error("❌ TMDB login gagal:", err);
-      setError("Login TMDB gagal. Pastikan username & password benar.");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  // 🔹 Optional: logout TMDB (hapus session lokal)
-  function handleLogout() {
-    localStorage.removeItem("tmdb:session_id");
-    localStorage.removeItem("tmdb:account_id");
-    setSessionId(null);
-    setMovies([]);
-    setSeries([]);
-  }
-
-  // 🔹 Hapus film dari watchlist TMDB
+  // Hapus film dari watchlist TMDB (pakai watchlist: false)
   async function handleRemoveMovie(movie) {
     if (!window.confirm(`Hapus "${movie.title}" dari watchlist TMDB?`)) return;
 
@@ -105,10 +61,9 @@ export default function MyList() {
       await addToWatchlist({
         media_type: "movie",
         media_id: movie.id,
-        watchlist: false, // ⬅️ inilah kuncinya: false = remove
+        watchlist: false,
       });
 
-      // update state lokal
       setMovies((prev) => prev.filter((m) => m.id !== movie.id));
     } catch (err) {
       console.error("❌ Gagal menghapus film dari watchlist:", err);
@@ -118,7 +73,7 @@ export default function MyList() {
     }
   }
 
-  // 🔹 Hapus series dari watchlist TMDB
+  // Hapus series dari watchlist TMDB
   async function handleRemoveSeries(tv) {
     if (!window.confirm(`Hapus "${tv.name}" dari watchlist TMDB?`)) return;
 
@@ -148,81 +103,25 @@ export default function MyList() {
       <main className="px-5 md:px-20 py-10">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h1 className="text-3xl md:text-4xl font-bold">Daftar Saya</h1>
+            <h1 className="text-3xl md:text-4xl font-bold">
+              Daftar Saya (Public Prototype)
+            </h1>
             <p className="text-white/70 mt-2">
-              Kumpulkan tayangan favoritmu di sini. Data akan disimpan di akun TMDB-mu.
+              Watchlist ini tersimpan di satu akun TMDB (akun demo). Semua
+              pengunjung aplikasi ini berbagi daftar yang sama — cocok untuk
+              belajar & prototype.
             </p>
           </div>
-
-          {sessionId && (
-            <button
-              onClick={handleLogout}
-              className="mt-2 px-4 py-2 text-sm rounded-lg bg-white/5 hover:bg-white/10 border border-white/10"
-            >
-              Keluar dari TMDB
-            </button>
-          )}
         </div>
 
-        {/* ✅ Kalau belum login TMDB: tampilkan form username/password */}
-        {!sessionId && !loading && (
-          <section className="mt-10 flex flex-col items-center">
-            <p className="mb-4 text-center text-white/80 max-w-md">
-              Untuk menyimpan dan melihat watchlist langsung dari akun TMDB,
-              login dulu menggunakan akun TMDB kamu.
-            </p>
-
-            <form
-              onSubmit={handleLogin}
-              className="w-full max-w-sm space-y-3 bg-[#202124]/60 border border-white/10 rounded-xl p-5"
-            >
-              <div className="space-y-1">
-                <label className="text-sm text-white/70">TMDB Username</label>
-                <input
-                  type="text"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  className="w-full px-3 py-2 rounded bg-[#181A1C] border border-white/10 focus:outline-none focus:ring-2 focus:ring-[#01B4E4]"
-                  placeholder="contoh: yamzal_dev"
-                  required
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-sm text-white/70">TMDB Password</label>
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full px-3 py-2 rounded bg-[#181A1C] border border-white/10 focus:outline-none focus:ring-2 focus:ring-[#01B4E4]"
-                  placeholder="password TMDB kamu"
-                  required
-                />
-              </div>
-
-              <button
-                type="submit"
-                className="w-full mt-2 px-4 py-2 rounded-lg bg-[#01B4E4] hover:bg-[#032541] transition font-semibold"
-              >
-                🔐 Login ke TMDB
-              </button>
-
-              <p className="text-xs text-white/50 mt-2">
-                *Ini hanya untuk penggunaan pribadi di lingkungan lokal. Jangan gunakan cara ini pada
-                aplikasi publik tanpa backend.
-              </p>
-            </form>
-          </section>
-        )}
-
-        {/* ✅ Loading state */}
+        {/* Loading */}
         {loading && (
           <section className="mt-10">
             <p className="text-white/70">Loading watchlist...</p>
           </section>
         )}
 
-        {/* ✅ Error state */}
+        {/* Error */}
         {error && !loading && (
           <section className="mt-10">
             <p className="text-red-400 mb-4">{error}</p>
@@ -235,15 +134,15 @@ export default function MyList() {
           </section>
         )}
 
-        {/* ✅ Kalau sudah login & tidak error: tampilkan watchlist */}
-        {sessionId && !loading && !error && (
+        {/* Data */}
+        {!loading && !error && (
           <section className="mt-10 space-y-10">
             {/* Film */}
             <div>
               <h2 className="text-2xl font-semibold mb-4">Film</h2>
               {movies.length === 0 ? (
                 <p className="text-white/60">
-                  Belum ada film di watchlist TMDB kamu.
+                  Belum ada film di watchlist akun demo TMDB.
                 </p>
               ) : (
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
@@ -265,14 +164,14 @@ export default function MyList() {
                         {movie.title}
                       </div>
 
-                      {/* Button delete muncul saat hover */}
+                      {/* Button delete */}
                       <button
                         type="button"
                         onClick={() => handleRemoveMovie(movie)}
                         disabled={deletingId === movie.id}
                         className="absolute top-2 right-2 opacity-0 group-hover:opacity-100
                                    transition bg-red-600/90 hover:bg-red-700 text-xs px-2 py-1 rounded
-                                   flex items-center gap-1 shadow-lg cursor-pointer"
+                                   flex items-center gap-1 shadow-lg cursor-pointer disabled:cursor-not-allowed"
                       >
                         <span>{deletingId === movie.id ? "..." : "Delete"}</span>
                       </button>
@@ -287,7 +186,7 @@ export default function MyList() {
               <h2 className="text-2xl font-semibold mb-4">Series</h2>
               {series.length === 0 ? (
                 <p className="text-white/60">
-                  Belum ada series di watchlist TMDB kamu.
+                  Belum ada series di watchlist akun demo TMDB.
                 </p>
               ) : (
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
@@ -309,14 +208,14 @@ export default function MyList() {
                         {tv.name}
                       </div>
 
-                      {/* Button delete series */}
+                      {/* Button delete */}
                       <button
                         type="button"
                         onClick={() => handleRemoveSeries(tv)}
                         disabled={deletingId === tv.id}
                         className="absolute top-2 right-2 opacity-0 group-hover:opacity-100
                                    transition bg-red-600/90 hover:bg-red-700 text-xs px-2 py-1 rounded
-                                   flex items-center gap-1 shadow-lg cursor-pointer"
+                                   flex items-center gap-1 shadow-lg cursor-pointer disabled:cursor-not-allowed"
                       >
                         <span>{deletingId === tv.id ? "..." : "Delete"}</span>
                       </button>
